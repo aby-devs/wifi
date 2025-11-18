@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "913193335430",
+    "project_id": "wifi-app-c93f2",
+    "storage_bucket": "wifi-app-c93f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:913193335430:android:6cc71ae801a84f9c75af07",
+        "android_client_info": {
+          "package_name": "com.example.wifi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpHyk6zHT6gs-qw-aoA_4t_5t4HoRMaA0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

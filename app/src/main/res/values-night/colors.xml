@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Dark Mode Color Scheme -->
+    <color name="primary_dark_blue">#0A0E27</color>
+    <color name="primary_blue">#1A1F3A</color>
+    <color name="light_blue">#4A90E2</color>
+    <color name="light_blue_bg">#2A2F4A</color>
+    <color name="dark_green">#2D8659</color>
+    <color name="light_green">#4ECB71</color>
+    <color name="orange">#FF6B35</color>
+    <color name="yellow_mpesa">#FFD93D</color>
+    <color name="mpesa_green">#00A859</color>
+    <color name="gray_text">#B0B0B0</color>
+    <color name="light_gray">#2A2F4A</color>
+    <color name="dark_gray">#1E2338</color>
+    <color name="card_background">#252A45</color>
+    <color name="teal">#3DD5C4</color>
+    <color name="background_dark">#0F1117</color>
+    <color name="surface_dark">#1A1F3A</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="accent_blue">#4A90E2</color>
+    <color name="accent_green">#4ECB71</color>
+    <color name="accent_orange">#FF6B35</color>
+    <color name="divider">#2A2F4A</color>
+</resources>

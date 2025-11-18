@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Modern Light Mode Color Scheme - Silicon Valley Style -->
+    <color name="primary_dark_blue">#1A237E</color>
+    <color name="primary_blue">#4285F4</color>
+    <color name="light_blue">#4285F4</color>
+    <color name="light_blue_bg">#64B5F6</color>
+    <color name="dark_green">#66BB6A</color>
+    <color name="light_green">#66BB6A</color>
+    <color name="orange">#EA4335</color>
+    <color name="yellow_mpesa">#FBBC04</color>
+    <color name="mpesa_green">#00A859</color>
+    <color name="gray_text">#5F6368</color>
+    <color name="light_gray">#90A4AE</color>
+    <color name="dark_gray">#E8EAED</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="teal">#34A853</color>
+    <color name="background_dark">#FAFAFA</color>
+    <color name="surface_dark">#FFFFFF</color>
+    <color name="text_primary">#202124</color>
+    <color name="text_secondary">#5F6368</color>
+    <color name="accent_blue">#4285F4</color>
+    <color name="accent_green">#34A853</color>
+    <color name="accent_orange">#EA4335</color>
+    <color name="divider">#E8EAED</color>
+</resources>
