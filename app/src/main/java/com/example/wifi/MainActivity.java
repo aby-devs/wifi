@@ -70,12 +70,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean justActivatedSubscription = false;
     private Date pendingExpiryDate = null;
     
-    // Chat UI elements
-    private EditText chatMessageInput;
-    private MaterialButton chatSendButton;
-    private LinearLayout chatMessagesContainer;
-    private ScrollView chatMessagesScrollView;
-    private ListenerRegistration chatListener;
+    // Review UI elements
+    private EditText reviewMessageInput;
+    private MaterialButton reviewSendButton;
+    private LinearLayout reviewMessagesContainer;
+    private ScrollView reviewMessagesScrollView;
+    private ListenerRegistration reviewListener;
     
     // Handler for checking subscription expiry
     private Handler expiryCheckHandler;
@@ -124,12 +124,12 @@ public class MainActivity extends AppCompatActivity {
         // Load user data
         loadUserData();
         
-        // Initialize chat UI
-        initializeChat();
+        // Initialize review UI
+        initializeReview();
         
-        // Load and listen to chat messages
-        loadChatMessages();
-        setupChatListener();
+        // Load and listen to review messages
+        loadReviewMessages();
+        setupReviewListener();
 
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -834,36 +834,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Chat Methods
-    private void initializeChat() {
-        chatMessageInput = findViewById(R.id.chatMessageInput);
-        chatSendButton = findViewById(R.id.chatSendButton);
-        chatMessagesContainer = findViewById(R.id.chatMessagesContainer);
-        chatMessagesScrollView = findViewById(R.id.chatMessagesScrollView);
+    // Review Methods
+    private void initializeReview() {
+        reviewMessageInput = findViewById(R.id.reviewMessageInput);
+        reviewSendButton = findViewById(R.id.reviewSendButton);
+        reviewMessagesContainer = findViewById(R.id.reviewMessagesContainer);
+        reviewMessagesScrollView = findViewById(R.id.reviewMessagesScrollView);
 
         // Update input field background based on theme
         boolean isDarkMode = (getResources().getConfiguration().uiMode & 
                 android.content.res.Configuration.UI_MODE_NIGHT_MASK) == 
                 android.content.res.Configuration.UI_MODE_NIGHT_YES;
-        chatMessageInput.setBackgroundResource(isDarkMode ? 
+        reviewMessageInput.setBackgroundResource(isDarkMode ? 
                 R.drawable.chat_input_background_dark : R.drawable.chat_input_background);
 
-        chatSendButton.setOnClickListener(new View.OnClickListener() {
+        reviewSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendChatMessage();
+                sendReviewMessage();
             }
         });
     }
 
-    private void sendChatMessage() {
+    private void sendReviewMessage() {
         if (authService.getCurrentUser() == null) {
             Toast.makeText(this, "Please login to send messages", Toast.LENGTH_SHORT).show();
             navigateToLogin();
             return;
         }
         
-        String message = chatMessageInput.getText().toString().trim();
+        String message = reviewMessageInput.getText().toString().trim();
         if (TextUtils.isEmpty(message)) {
             return;
         }
@@ -890,15 +890,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendMessageToFirestore(String userId, String userName, String message) {
-        chatSendButton.setEnabled(false);
-        firestoreService.sendChatMessage(userId, userName, message, new FirestoreService.FirestoreCallback() {
+        reviewSendButton.setEnabled(false);
+        firestoreService.sendReviewMessage(userId, userName, message, new FirestoreService.FirestoreCallback() {
             @Override
             public void onSuccess(Object result) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        chatMessageInput.setText("");
-                        chatSendButton.setEnabled(true);
+                        reviewMessageInput.setText("");
+                        reviewSendButton.setEnabled(true);
                     }
                 });
             }
@@ -909,15 +909,53 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(MainActivity.this, "Failed to send message: " + errorMessage, Toast.LENGTH_SHORT).show();
-                        chatSendButton.setEnabled(true);
+                        reviewSendButton.setEnabled(true);
                     }
                 });
             }
         });
     }
 
-    private void loadChatMessages() {
-        firestoreService.getChatMessages(new FirestoreService.ChatMessagesCallback() {
+    private void loadReviewMessages() {
+        if (authService.getCurrentUser() == null) {
+            Log.d("MainActivity", "User not logged in, cannot load review messages");
+            return;
+        }
+        
+        String userId = authService.getCurrentUser().getUid();
+        Log.d("MainActivity", "Loading review messages for userId: " + userId);
+        firestoreService.getReviewMessages(userId, new FirestoreService.ChatMessagesCallback() {
+            @Override
+            public void onSuccess(List<ChatMessage> messages) {
+                Log.d("MainActivity", "Successfully loaded " + (messages != null ? messages.size() : 0) + " review messages");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        displayMessages(messages);
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(String errorMessage) {
+                Log.e("MainActivity", "Failed to load review messages: " + errorMessage);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Failed to load reviews: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
+
+    private void setupReviewListener() {
+        if (authService.getCurrentUser() == null) {
+            return;
+        }
+        
+        String userId = authService.getCurrentUser().getUid();
+        reviewListener = firestoreService.listenToReviewMessages(userId, new FirestoreService.ChatMessagesCallback() {
             @Override
             public void onSuccess(List<ChatMessage> messages) {
                 runOnUiThread(new Runnable() {
@@ -930,37 +968,18 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String errorMessage) {
-                Log.e("MainActivity", "Failed to load chat messages: " + errorMessage);
-            }
-        });
-    }
-
-    private void setupChatListener() {
-        chatListener = firestoreService.listenToChatMessages(new FirestoreService.ChatMessagesCallback() {
-            @Override
-            public void onSuccess(List<ChatMessage> messages) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        displayMessages(messages);
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(String errorMessage) {
-                Log.e("MainActivity", "Chat listener error: " + errorMessage);
+                Log.e("MainActivity", "Review listener error: " + errorMessage);
             }
         });
     }
 
     private void displayMessages(List<ChatMessage> messages) {
-        if (chatMessagesContainer == null) {
-            Log.e("MainActivity", "chatMessagesContainer is null");
+        if (reviewMessagesContainer == null) {
+            Log.e("MainActivity", "reviewMessagesContainer is null");
             return;
         }
         
-        chatMessagesContainer.removeAllViews();
+        reviewMessagesContainer.removeAllViews();
 
         if (messages == null || messages.isEmpty()) {
             Log.d("MainActivity", "No messages to display");
@@ -974,20 +993,22 @@ public class MainActivity extends AppCompatActivity {
             if (message == null) {
                 continue;
             }
-            // Log message details for debugging
-            Log.d("MainActivity", "Message from userId: " + message.getUserId() + ", userName: " + message.getUserName() + ", currentUserId: " + currentUserId);
+            // Only display messages from the current user (should already be filtered, but double-check for safety)
+            if (currentUserId != null && !currentUserId.equals(message.getUserId())) {
+                continue;
+            }
             View messageView = createMessageView(message);
             if (messageView != null) {
-                chatMessagesContainer.addView(messageView);
+                reviewMessagesContainer.addView(messageView);
             }
         }
 
         // Scroll to bottom
-        if (chatMessagesScrollView != null) {
-            chatMessagesScrollView.post(new Runnable() {
+        if (reviewMessagesScrollView != null) {
+            reviewMessagesScrollView.post(new Runnable() {
                 @Override
                 public void run() {
-                    chatMessagesScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+                    reviewMessagesScrollView.fullScroll(ScrollView.FOCUS_DOWN);
                 }
             });
         }
@@ -1086,8 +1107,8 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         stopExpiryChecking();
         stopCountdownTimer();
-        if (chatListener != null) {
-            chatListener.remove();
+        if (reviewListener != null) {
+            reviewListener.remove();
         }
     }
     

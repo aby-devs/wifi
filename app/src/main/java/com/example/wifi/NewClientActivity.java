@@ -142,9 +142,9 @@ public class NewClientActivity extends AppCompatActivity {
                                     @Override
                                     public void onSuccess(Object result) {
                                         // Update user subscription status
-                                        // Set expiry to 1 minute for testing
+                                        // Set expiry to 3 minutes for testing
                                         Calendar calendar = Calendar.getInstance();
-                                        calendar.add(Calendar.MINUTE, 1); // 1 minute for testing
+                                        calendar.add(Calendar.MINUTE, 3); // 3 minutes for testing
                                         Date expiryDate = calendar.getTime();
                                         
                                         Map<String, Object> userUpdates = new HashMap<>();

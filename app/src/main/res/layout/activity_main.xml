@@ -687,23 +687,23 @@
 
         </LinearLayout>
 
-        <!-- Chat Section -->
+        <!-- Reviews Section -->
         <TextView
-            android:id="@+id/chatTitle"
+            android:id="@+id/reviewTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="32dp"
-            android:text="Chat with Admin"
+            android:text="Reviews"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/quickActionsContainer" />
 
-        <!-- Chat Messages Container -->
+        <!-- Review Messages Container -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/chatCard"
+            android:id="@+id/reviewCard"
             android:layout_width="0dp"
             android:layout_height="300dp"
             android:layout_marginStart="16dp"
@@ -714,7 +714,7 @@
             app:cardElevation="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/chatTitle">
+            app:layout_constraintTop_toBottomOf="@id/reviewTitle">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -723,17 +723,17 @@
 
                 <!-- Messages ScrollView -->
                 <ScrollView
-                    android:id="@+id/chatMessagesScrollView"
+                    android:id="@+id/reviewMessagesScrollView"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:fillViewport="true"
-                    app:layout_constraintBottom_toTopOf="@id/chatInputContainer"
+                    app:layout_constraintBottom_toTopOf="@id/reviewInputContainer"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <LinearLayout
-                        android:id="@+id/chatMessagesContainer"
+                        android:id="@+id/reviewMessagesContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
@@ -743,7 +743,7 @@
 
                 <!-- Input Container -->
                 <LinearLayout
-                    android:id="@+id/chatInputContainer"
+                    android:id="@+id/reviewInputContainer"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -754,14 +754,14 @@
                     app:layout_constraintStart_toStartOf="parent">
 
                     <EditText
-                        android:id="@+id/chatMessageInput"
+                        android:id="@+id/reviewMessageInput"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_weight="1"
                         android:minHeight="48dp"
                         android:background="@drawable/chat_input_background"
-                        android:hint="Type a message..."
+                        android:hint="Write a review..."
                         android:inputType="textMultiLine|textCapSentences"
                         android:maxLines="3"
                         android:paddingStart="20dp"
@@ -774,7 +774,7 @@
                         android:gravity="center_vertical" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/chatSendButton"
+                        android:id="@+id/reviewSendButton"
                         android:layout_width="56dp"
                         android:layout_height="56dp"
                         android:minWidth="0dp"
@@ -783,7 +783,7 @@
                         android:insetRight="0dp"
                         android:insetBottom="0dp"
                         android:text=""
-                        android:contentDescription="Send message"
+                        android:contentDescription="Send review"
                         app:icon="@android:drawable/ic_menu_send"
                         app:iconTint="@color/white"
                         app:iconGravity="textStart"

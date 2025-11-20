@@ -751,41 +751,50 @@ public class FirestoreService {
         void onFailure(String errorMessage);
     }
 
-    // Chat Message Operations
-    public void sendChatMessage(String userId, String userName, String message, FirestoreCallback callback) {
-        String messageId = db.collection("chatMessages").document().getId();
+    // Review Message Operations
+    public void sendReviewMessage(String userId, String userName, String message, FirestoreCallback callback) {
+        String messageId = db.collection("reviewMessages").document().getId();
         Date timestamp = new Date();
         
-        ChatMessage chatMessage = new ChatMessage(messageId, userId, userName, message, timestamp);
+        ChatMessage reviewMessage = new ChatMessage(messageId, userId, userName, message, timestamp);
         
         Map<String, Object> messageMap = new HashMap<>();
-        messageMap.put("messageId", chatMessage.getMessageId());
-        messageMap.put("userId", chatMessage.getUserId());
-        messageMap.put("userName", chatMessage.getUserName());
-        messageMap.put("message", chatMessage.getMessage());
-        messageMap.put("timestamp", new Timestamp(chatMessage.getTimestamp()));
-        messageMap.put("isRead", chatMessage.isRead());
+        messageMap.put("messageId", reviewMessage.getMessageId());
+        messageMap.put("userId", reviewMessage.getUserId());
+        messageMap.put("userName", reviewMessage.getUserName());
+        messageMap.put("message", reviewMessage.getMessage());
+        messageMap.put("timestamp", new Timestamp(reviewMessage.getTimestamp()));
+        messageMap.put("isRead", reviewMessage.isRead());
         
-        db.collection("chatMessages").document(messageId)
+        db.collection("reviewMessages").document(messageId)
                 .set(messageMap)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        Log.d(TAG, "Chat message sent successfully");
-                        callback.onSuccess(chatMessage);
+                        Log.d(TAG, "Review message sent successfully");
+                        callback.onSuccess(reviewMessage);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error sending chat message", e);
+                        Log.w(TAG, "Error sending review message", e);
                         callback.onFailure(e.getMessage());
                     }
                 });
     }
 
-    public void getChatMessages(ChatMessagesCallback callback) {
-        db.collection("chatMessages")
+    public void getReviewMessages(String userId, ChatMessagesCallback callback) {
+        if (userId == null || userId.isEmpty()) {
+            callback.onFailure("User ID is required");
+            return;
+        }
+        
+        Log.d(TAG, "Fetching review messages for userId: " + userId);
+        
+        // Try with orderBy first (requires Firestore index)
+        db.collection("reviewMessages")
+                .whereEqualTo("userId", userId)
                 .orderBy("timestamp", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -793,7 +802,10 @@ public class FirestoreService {
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
                         if (task.isSuccessful()) {
                             List<ChatMessage> messages = new ArrayList<>();
-                            for (QueryDocumentSnapshot document : task.getResult()) {
+                            QuerySnapshot querySnapshot = task.getResult();
+                            Log.d(TAG, "Found " + querySnapshot.size() + " review messages");
+                            
+                            for (QueryDocumentSnapshot document : querySnapshot) {
                                 ChatMessage message = document.toObject(ChatMessage.class);
                                 // Ensure messageId is set from document ID
                                 if (message.getMessageId() == null || message.getMessageId().isEmpty()) {
@@ -804,6 +816,7 @@ public class FirestoreService {
                                     message.setTimestamp(document.getTimestamp("timestamp").toDate());
                                 }
                                 messages.add(message);
+                                Log.d(TAG, "Added message: " + message.getMessage() + " from userId: " + message.getUserId());
                             }
                             // Sort by timestamp in case orderBy didn't work
                             messages.sort((m1, m2) -> {
@@ -814,18 +827,32 @@ public class FirestoreService {
                                 if (d2 == null) return -1;
                                 return d1.compareTo(d2);
                             });
+                            Log.d(TAG, "Returning " + messages.size() + " sorted messages");
                             callback.onSuccess(messages);
                         } else {
                             // If orderBy fails (e.g., missing index), try without orderBy
-                            Log.w(TAG, "Error getting chat messages with orderBy, trying without", task.getException());
-                            db.collection("chatMessages")
+                            Exception exception = task.getException();
+                            Log.w(TAG, "Error getting review messages with orderBy, trying without. Error: " + 
+                                    (exception != null ? exception.getMessage() : "Unknown error"), exception);
+                            
+                            // Check if it's an index error
+                            if (exception != null && exception.getMessage() != null && 
+                                exception.getMessage().contains("index")) {
+                                Log.w(TAG, "Firestore index required. Please create a composite index for reviewMessages collection on fields: userId (Ascending), timestamp (Ascending)");
+                            }
+                            
+                            db.collection("reviewMessages")
+                                    .whereEqualTo("userId", userId)
                                     .get()
                                     .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                         @Override
                                         public void onComplete(@NonNull Task<QuerySnapshot> task2) {
                                             if (task2.isSuccessful()) {
                                                 List<ChatMessage> messages = new ArrayList<>();
-                                                for (QueryDocumentSnapshot document : task2.getResult()) {
+                                                QuerySnapshot querySnapshot = task2.getResult();
+                                                Log.d(TAG, "Found " + querySnapshot.size() + " review messages (without orderBy)");
+                                                
+                                                for (QueryDocumentSnapshot document : querySnapshot) {
                                                     ChatMessage message = document.toObject(ChatMessage.class);
                                                     if (message.getMessageId() == null || message.getMessageId().isEmpty()) {
                                                         message.setMessageId(document.getId());
@@ -844,9 +871,10 @@ public class FirestoreService {
                                                     if (d2 == null) return -1;
                                                     return d1.compareTo(d2);
                                                 });
+                                                Log.d(TAG, "Returning " + messages.size() + " sorted messages (without orderBy)");
                                                 callback.onSuccess(messages);
                                             } else {
-                                                Log.w(TAG, "Error getting chat messages", task2.getException());
+                                                Log.w(TAG, "Error getting review messages", task2.getException());
                                                 callback.onFailure(task2.getException() != null ? 
                                                         task2.getException().getMessage() : "Failed to load messages");
                                             }
@@ -857,34 +885,82 @@ public class FirestoreService {
                 });
     }
 
-    public ListenerRegistration listenToChatMessages(final ChatMessagesCallback callback) {
-        return db.collection("chatMessages")
-                .orderBy("timestamp", Query.Direction.ASCENDING)
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(QuerySnapshot snapshots, FirebaseFirestoreException e) {
-                        if (e != null) {
-                            Log.w(TAG, "Listen failed", e);
-                            callback.onFailure(e.getMessage());
-                            return;
-                        }
-
-                        List<ChatMessage> messages = new ArrayList<>();
-                        for (QueryDocumentSnapshot doc : snapshots) {
-                            ChatMessage message = doc.toObject(ChatMessage.class);
-                            // Ensure messageId is set from document ID
-                            if (message.getMessageId() == null || message.getMessageId().isEmpty()) {
-                                message.setMessageId(doc.getId());
-                            }
-                            // Convert Firestore Timestamp to Date
-                            if (doc.getTimestamp("timestamp") != null) {
-                                message.setTimestamp(doc.getTimestamp("timestamp").toDate());
-                            }
-                            messages.add(message);
-                        }
-                        callback.onSuccess(messages);
+    public ListenerRegistration listenToReviewMessages(String userId, final ChatMessagesCallback callback) {
+        if (userId == null || userId.isEmpty()) {
+            callback.onFailure("User ID is required");
+            return null;
+        }
+        
+        Log.d(TAG, "Setting up listener for review messages for userId: " + userId);
+        
+        // Try with orderBy first
+        Query query = db.collection("reviewMessages")
+                .whereEqualTo("userId", userId)
+                .orderBy("timestamp", Query.Direction.ASCENDING);
+        
+        return query.addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(QuerySnapshot snapshots, FirebaseFirestoreException e) {
+                if (e != null) {
+                    Log.w(TAG, "Review messages listener failed", e);
+                    // If it's an index error, try without orderBy
+                    if (e.getMessage() != null && e.getMessage().contains("index")) {
+                        Log.w(TAG, "Index error detected, trying listener without orderBy");
+                        // Fallback: try without orderBy
+                        db.collection("reviewMessages")
+                                .whereEqualTo("userId", userId)
+                                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                                    @Override
+                                    public void onEvent(QuerySnapshot snapshots2, FirebaseFirestoreException e2) {
+                                        if (e2 != null) {
+                                            Log.w(TAG, "Listen failed (without orderBy)", e2);
+                                            callback.onFailure(e2.getMessage());
+                                            return;
+                                        }
+                                        processSnapshot(snapshots2, callback);
+                                    }
+                                });
+                        return;
                     }
-                });
+                    callback.onFailure(e.getMessage());
+                    return;
+                }
+
+                processSnapshot(snapshots, callback);
+            }
+        });
+    }
+    
+    private void processSnapshot(QuerySnapshot snapshots, ChatMessagesCallback callback) {
+        List<ChatMessage> messages = new ArrayList<>();
+        Log.d(TAG, "Processing snapshot with " + snapshots.size() + " documents");
+        
+        for (QueryDocumentSnapshot doc : snapshots) {
+            ChatMessage message = doc.toObject(ChatMessage.class);
+            // Ensure messageId is set from document ID
+            if (message.getMessageId() == null || message.getMessageId().isEmpty()) {
+                message.setMessageId(doc.getId());
+            }
+            // Convert Firestore Timestamp to Date
+            if (doc.getTimestamp("timestamp") != null) {
+                message.setTimestamp(doc.getTimestamp("timestamp").toDate());
+            }
+            messages.add(message);
+            Log.d(TAG, "Added message from listener: " + message.getMessage());
+        }
+        
+        // Sort by timestamp
+        messages.sort((m1, m2) -> {
+            Date d1 = m1.getTimestamp();
+            Date d2 = m2.getTimestamp();
+            if (d1 == null && d2 == null) return 0;
+            if (d1 == null) return 1;
+            if (d2 == null) return -1;
+            return d1.compareTo(d2);
+        });
+        
+        Log.d(TAG, "Returning " + messages.size() + " messages from listener");
+        callback.onSuccess(messages);
     }
 
     public interface ChatMessagesCallback {

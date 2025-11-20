@@ -155,7 +155,7 @@ public class MonthlyRenewActivity extends AppCompatActivity {
                                         Log.d("MonthlyRenew", "Payment updated successfully");
                                         // Update user subscription status - this will move user from expired_users to active_users
                                         Calendar calendar = Calendar.getInstance();
-                                        calendar.add(Calendar.MINUTE, 1); // 1 minute for testing
+                                        calendar.add(Calendar.MINUTE, 3); // 3 minutes for testing
                                         Date expiryDate = calendar.getTime();
                                         
                                         Map<String, Object> userUpdates = new HashMap<>();
